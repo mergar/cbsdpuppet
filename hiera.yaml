@@ -1,0 +1,8 @@
+---
+:backends:
+  - yaml
+:yaml:
+  :datadir: /tmp/cbsd
+:hierarchy:
+  - common
+:merge_behavior: deeper

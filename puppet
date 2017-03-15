@@ -1,0 +1,132 @@
+#!/usr/local/bin/cbsd
+#v11.0.0
+MYARG="module jname"
+MYOPTARG="mode"
+MYDESC="Generate puppet manifests"
+ADDHELP="module= specify module name\n\
+mode= apply - puppet apply\n\
+jname= can cbsdpuppet1 for configure current system or just create manifest\n"
+
+. ${subr}
+. ${system}
+. ${tools}
+. ${strings}
+
+init $*
+
+. ${jrcconf}
+[ $? -eq 1 ] && err 1 "${MAGENTA}No such jail: ${GREEN}${jname}${NORMAL}"
+
+[ -z "${mode}" ] && mode="show"
+
+formfile="${jailsysdir}/${jname}/helpers/${module}.sqlite"
+[ ! -r ${formfile} ] && err 1 "${MAGENTA}No such formfile: ${GREEN}${formfile}${NORMAL}"
+
+my_module_dir="${moduledir}/forms.d/${module}"
+sitepp="${my_module_dir}/site.pp"
+
+[ ! -r ${sitepp} ] && err 1 "${MAGENTA}No such sitepp: ${GREEN}${sitepp}${NORMAL}"
+
+. ${sitepp}
+
+mksitefile="${moduledir}/forms.d/${module}/site.pp"
+
+. ${workdir}/imghelper.subr
+
+readconf helpers.conf
+
+param=$( cbsdsql ${formfile} SELECT param FROM forms ORDER BY CAST\(order_id AS int\) | /usr/bin/xargs )
+load_forms
+load_new
+
+# todo
+# reload only when changed
+
+puppet_apply()
+{
+	local _jpuppet_dir
+	local _jpuppet_puppet_src
+	local _was_started
+
+	_jpuppet_dir="${jaildatadir}/${cbsd_helper_jname}-${jaildatapref}/usr/local"
+	_jpuppet_puppet_src="${_jpuppet_dir}/bin/puppet"
+
+	[ ! -x "${_jpuppet_puppet_src}" ] && err 1 "${MAGENTA}No such puppet in /usr/local/bin/puppet inside ${cbsd_helper_jname}${NORMAL}"
+
+	if [ ${jid} -eq 0 ]; then
+		jstart jname=${jname}
+		_was_started=0
+	else
+		_was_started=1
+	fi
+
+	[ $baserw -eq 1 ] && path="${data}"
+
+	[ -z "${path}" ] && err 1 "No path variable"
+
+	[ ! -d ${moduledir}/puppet.d/puppet_root ] && err 1 "No such ${moduledir}/puppet.d/puppet_root"
+	[ ! -d "${path}/usr/local/etc/puppet/modules" ] && mkdir -p ${path}/usr/local/etc/puppet/modules
+
+	# first - mount puppet jail source
+	[ ! -d "${path}/tmp/puppet" ] && mkdir -p ${path}/tmp/puppet
+	/sbin/mount -t nullfs -o ro ${_jpuppet_dir} ${path}/tmp/puppet
+	/sbin/mount -t nullfs -o ro ${moduledir}/puppet.d/puppet_root ${path}/tmp/puppet/etc/puppet
+
+	[ $? -ne 0 ] && err 1 "Error mount ${moduledir}/puppet.d/puppet_root/modules to /usr/local/etc/puppet/modules inside jail"
+
+	[ ! -d ${path}/tmp/cbsd ] && /bin/mkdir -p ${path}/tmp/cbsd
+
+	generate_manifest > ${path}/tmp/cbsd/${helpername}.pp
+	generate_manifest > ${local_puppet_manifest_dir}/${module}.pp
+
+	generate_hieradata > ${path}/tmp/cbsd/common.yaml
+	generate_hieradata > ${local_puppet_hieradata_dir}/${module}.yaml
+
+	[ ! -d ${path}/usr/local/etc/puppet ] && /bin/mkdir ${path}/usr/local/etc/puppet
+	/bin/cp -a ${moduledir}/puppet.d/hiera.yaml ${path}/usr/local/etc/puppet/hiera.yaml
+
+	${ECHO} "${MAGENTA}Puppet in progress: ${GREEN}jexec for /tmp/${helpername}.pp${NORMAL}"
+	echo "jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/${helpername}.pp"
+#	jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/${helpername}.pp
+	jexec jname=${jname} /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml /tmp/cbsd/${helpername}.pp
+
+	/sbin/umount ${path}/tmp/puppet/etc/puppet
+	/sbin/umount ${path}/tmp/puppet
+	if [ ${_was_started} -eq 0 ]; then
+		jstop jname=${jname}
+		jcleanup jname=${jname}
+	else
+		[ -n "${have_restart}" ] && jexec jname=$jname ${have_restart}
+	fi
+}
+
+local_puppet_dir="${jailsysdir}/${jname}/puppet"
+local_puppet_manifest_dir="${local_puppet_dir}/manifest"
+local_puppet_hieradata_dir="${local_puppet_dir}/hieradata"
+
+[ ! -d ${local_puppet_manifest_dir} ] && /bin/mkdir -p ${local_puppet_manifest_dir}
+[ ! -d ${local_puppet_hieradata_dir} ] && /bin/mkdir -p ${local_puppet_hieradata_dir}
+
+# We check that we all have to be used helpers
+case "${helper_module}" in
+	puppet)
+		jstatus jname=${cbsd_helper_jname} > /dev/null 2>&1
+		[ $? -ne 1 ] && err 1 "${MAGENTA}No such ${cbsd_helper_jname} jail. Please obtain cbsdpuppet1 jail from repo or create in by hands${NORMAL}"
+		;;
+esac
+
+
+case "${mode}" in
+	"apply")
+		${ECHO} "${MAGENTA}Applying puppet manifest for: ${GREEN}${module}${NORMAL}"
+		puppet_apply
+		;;
+	*)
+		echo "Manifest dir: $local_puppet_manifest_dir"
+		echo "Hiera dir: $local_puppet_hieradata_dir"
+
+		generate_manifest > ${local_puppet_manifest_dir}/${module}.pp
+		generate_hieradata > ${local_puppet_hieradata_dir}/${module}.yaml
+		generate_manifest
+		;;
+esac
