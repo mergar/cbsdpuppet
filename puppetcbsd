@@ -64,8 +64,18 @@ ldconfig_paths="${DIR}/lib /usr/local/lib"
 
 ldconfig_start
 
-"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet config set hiera_config /tmp/puppet/etc/puppet/hiera.yaml
+#"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet config set hiera_config /tmp/puppet/etc/puppet/hiera.yaml
+"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet config set hiera_config /usr/local/etc/puppet/hiera.yaml
+
+#"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet --hiera_config /usr/local/etc/puppet/hiera.yaml
+
 echo "Check module tree"
 "${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet module list --tree --modulepath=${modulepath}
+"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet module list --tree --modulepath=/usr/local/etc/puppet/modules
 echo "WIP"
-"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet apply --color false --modulepath=${modulepath} $@
+#"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet apply --color false --modulepath=${modulepath} $@
+#"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet apply  --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=${modulepath} $@
+
+# run it twice
+"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=/usr/local/etc/puppet/modules $@
+"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=/usr/local/etc/puppet/modules $@

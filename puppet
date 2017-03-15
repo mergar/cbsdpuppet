@@ -64,13 +64,18 @@ puppet_apply()
 
 	[ -z "${path}" ] && err 1 "No path variable"
 
-	[ ! -d ${moduledir}/puppet.d/puppet_root ] && err 1 "No such ${moduledir}/puppet.d/puppet_root"
+	[ ! -d ${moduledir}/puppet.d/modules/public ] && err 1 "No such ${moduledir}/puppet.d/modules/public"
 	[ ! -d "${path}/usr/local/etc/puppet/modules" ] && mkdir -p ${path}/usr/local/etc/puppet/modules
+
+	[ ! -d ${path}/usr/local/etc/puppet ] && /bin/mkdir -p ${path}/usr/local/etc/puppet
+	[ ! -d ${path}/usr/local/etc/puppet/modules ] && /bin/mkdir ${path}/usr/local/etc/puppet/modules
+	/bin/cp -a ${moduledir}/puppet.d/hiera.yaml ${path}/usr/local/etc/puppet/hiera.yaml
 
 	# first - mount puppet jail source
 	[ ! -d "${path}/tmp/puppet" ] && mkdir -p ${path}/tmp/puppet
 	/sbin/mount -t nullfs -o ro ${_jpuppet_dir} ${path}/tmp/puppet
-	/sbin/mount -t nullfs -o ro ${moduledir}/puppet.d/puppet_root ${path}/tmp/puppet/etc/puppet
+	/sbin/mount -t nullfs -o ro ${moduledir}/puppet.d/modules/public ${path}/usr/local/etc/puppet/modules
+	/sbin/mount -t nullfs -o ro ${moduledir}/puppet.d ${path}/tmp/puppet/etc/puppet
 
 	[ $? -ne 0 ] && err 1 "Error mount ${moduledir}/puppet.d/puppet_root/modules to /usr/local/etc/puppet/modules inside jail"
 
@@ -82,14 +87,15 @@ puppet_apply()
 	generate_hieradata > ${path}/tmp/cbsd/common.yaml
 	generate_hieradata > ${local_puppet_hieradata_dir}/${module}.yaml
 
-	[ ! -d ${path}/usr/local/etc/puppet ] && /bin/mkdir ${path}/usr/local/etc/puppet
-	/bin/cp -a ${moduledir}/puppet.d/hiera.yaml ${path}/usr/local/etc/puppet/hiera.yaml
-
 	${ECHO} "${MAGENTA}Puppet in progress: ${GREEN}jexec for /tmp/${helpername}.pp${NORMAL}"
 	echo "jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/${helpername}.pp"
-#	jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/${helpername}.pp
-	jexec jname=${jname} /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml /tmp/cbsd/${helpername}.pp
+	jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/cbsd/${helpername}.pp
+#	jexec jname=${jname} /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml /tmp/cbsd/${helpername}.pp
 
+	echo "***"
+#	read p
+
+	/sbin/umount ${path}/usr/local/etc/puppet/modules
 	/sbin/umount ${path}/tmp/puppet/etc/puppet
 	/sbin/umount ${path}/tmp/puppet
 	if [ ${_was_started} -eq 0 ]; then
