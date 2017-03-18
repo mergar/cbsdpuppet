@@ -30,6 +30,7 @@ class mysql::params {
   $client_dev_package_provider = undef
   $daemon_dev_package_ensure   = 'present'
   $daemon_dev_package_provider = undef
+  $xtrabackup_package_name     = 'percona-xtrabackup'
 
 
   case $::osfamily {
@@ -137,10 +138,17 @@ class mysql::params {
       $root_group          = 'root'
       $mysql_group         = 'mysql'
       $server_service_name = 'mysql'
-      $socket              = $::operatingsystem ? {
-        /OpenSuSE/         => '/var/run/mysql/mysql.sock',
-        /(SLES|SLED)/      => '/var/lib/mysql/mysql.sock',
+
+      if $::operatingsystem =~ /(SLES|SLED)/ {
+        if versioncmp( $::operatingsystemmajrelease, '12' ) >= 0 {
+          $socket = '/run/mysql/mysql.sock'
+        } else {
+          $socket = '/var/lib/mysql/mysql.sock'
+        }
+      } else {
+        $socket = '/var/run/mysql/mysql.sock'
       }
+
       $ssl_ca              = '/etc/mysql/cacert.pem'
       $ssl_cert            = '/etc/mysql/server-cert.pem'
       $ssl_key             = '/etc/mysql/server-key.pem'
@@ -179,11 +187,15 @@ class mysql::params {
       # mysql::bindings
       $java_package_name   = 'libmysql-java'
       $perl_package_name   = 'libdbd-mysql-perl'
-      $php_package_name    = 'php5-mysql'
+      $php_package_name    = $::lsbdistcodename ? {
+        'xenial'           => 'php-mysql',
+        default            => 'php5-mysql',
+      }
       $python_package_name = 'python-mysqldb'
       $ruby_package_name   = $::lsbdistcodename ? {
         'trusty'           => 'ruby-mysql',
         'jessie'           => 'ruby-mysql',
+        'xenial'           => 'ruby-mysql',
         default            => 'libmysql-ruby',
       }
       $client_dev_package_name = 'libmysqlclient-dev'

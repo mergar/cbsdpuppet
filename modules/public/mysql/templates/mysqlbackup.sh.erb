@@ -16,12 +16,13 @@
 
 USER=<%= @backupuser %>
 PASS='<%= @backuppassword %>'
+MAX_ALLOWED_PACKET=<%= @maxallowedpacket %>
 DIR=<%= @backupdir %>
 ROTATE=<%= [ Integer(@backuprotate) - 1, 0 ].max %>
 
 # Create temporary mysql cnf file.
 TMPFILE=`mktemp /tmp/backup.XXXXXX` || exit 1
-echo -e "[client]\npassword=$PASS\nuser=$USER" > $TMPFILE
+echo -e "[client]\npassword=$PASS\nuser=$USER\nmax_allowed_packet=$MAX_ALLOWED_PACKET" > $TMPFILE
 
 # Ensure backup directory exist.
 mkdir -p $DIR
@@ -68,7 +69,7 @@ cleanup
 <% end -%>
 <% if @backupdatabases.empty? -%>
 <% if @file_per_database -%>
-mysql --defaults-file=$TMPFILE -s -r -N -e 'SHOW DATABASES' | while read dbname
+mysql --defaults-extra-file=$TMPFILE -s -r -N -e 'SHOW DATABASES' | while read dbname
 do
   mysqldump --defaults-extra-file=$TMPFILE --opt --flush-logs --single-transaction \
     ${ADDITIONAL_OPTIONS} \
