@@ -52,7 +52,10 @@ ldconfig_start()
 	fi
 }
 
-pkg install -y sysutils/puppet4
+pkg query %o puppet4
+[ $? -ne 0 ] && pkg install -y sysutils/puppet4
+
+
 # run it twice
 /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=/usr/local/etc/puppet/modules $@
 /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=/usr/local/etc/puppet/modules $@
