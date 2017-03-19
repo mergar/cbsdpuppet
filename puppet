@@ -89,6 +89,7 @@ puppet_apply()
 
 	${ECHO} "${MAGENTA}Puppet in progress: ${GREEN}jexec for /tmp/${helpername}.pp${NORMAL}"
 	echo "jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/${helpername}.pp"
+
 	jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/cbsd/${helpername}.pp
 #	jexec jname=${jname} /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml /tmp/cbsd/${helpername}.pp
 

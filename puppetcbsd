@@ -52,10 +52,30 @@ ldconfig_start()
 	fi
 }
 
-pkg query %o puppet4
-[ $? -ne 0 ] && pkg install -y sysutils/puppet4
 
+### # WITH local puppet: ###
+pkg query %o puppet4
+[ $? -ne 0 ] && env ASSUME_ALWAYS_YES=yes pkg install -y sysutils/puppet4
 
 # run it twice
 /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=/usr/local/etc/puppet/modules $@
 /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=/usr/local/etc/puppet/modules $@
+
+exit 0
+
+#### OLD method ###
+#DIR="/tmp/puppet"
+
+#init_ruby_path
+
+#GEM_PATH="${DIR}/lib/ruby/${RUBY_VER}/:${DIR}/:${DIR}/bin/:${RUBY_PLATFORM_DIR}/:${DIR}/lib/ruby/site_ruby/${RUBY_VER}/"
+#GEM_HOME="${DIR}/lib/ruby/${RUBY_VER}/:${RUBY_PLATFORM_DIR}/:${DIR}/lib/ruby/site_ruby/${RUBY_VER}/"
+#modulepath="${DIR}/etc/puppet/environments/production/modules"
+#modulepath="/usr/local/etc/puppet/modules"
+
+#ldconfig_paths="${DIR}/lib /usr/local/lib"
+#
+#ldconfig_start
+#
+#"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet config set hiera_config /tmp/puppet/etc/puppet/hiera.yaml
+#"${DIR}/bin/ruby" -I "${DIR}/lib/ruby/${RUBY_VER}/" -I "${DIR}/bin/" -I "${RUBY_PLATFORM_DIR}" -I "${DIR}/lib/ruby/site_ruby/${RUBY_VER}/" ${DIR}/bin/puppet apply --color false --modulepath=${modulepath} $@
