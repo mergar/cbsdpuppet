@@ -81,17 +81,35 @@ puppet_apply()
 
 	[ ! -d ${path}/tmp/cbsd ] && /bin/mkdir -p ${path}/tmp/cbsd
 
-	generate_manifest > ${path}/tmp/cbsd/${helpername}.pp
 	generate_manifest > ${local_puppet_manifest_dir}/${module}.pp
+	/bin/cp -a ${local_puppet_manifest_dir}/${module}.pp ${path}/tmp/cbsd/${helpername}.pp
 
-	generate_hieradata > ${path}/tmp/cbsd/common.yaml
+	if [ -d /usr/local/etc/puppet/environments/production/manifests ]; then
+		echo "Copy manifest to /usr/local/etc/puppet/environments/production/manifests/${jname}-${helpername}.pp"
+		/bin/cp ${local_puppet_manifest_dir}/${module}.pp /usr/local/etc/puppet/environments/production/manifests/${jname}-${helpername}.pp
+	else
+		echo "no /usr/local/etc/puppet/environments/production/manifests, skip for coping manifest"
+	fi
+
+
 	generate_hieradata > ${local_puppet_hieradata_dir}/${module}.yaml
+	/bin/cp -a ${local_puppet_hieradata_dir}/${module}.yaml ${path}/tmp/cbsd/common.yaml
 
-	${ECHO} "${MAGENTA}Puppet in progress: ${GREEN}jexec for /tmp/${helpername}.pp${NORMAL}"
-	echo "jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/${helpername}.pp"
+	if [ -d /usr/local/etc/puppet/hieradata/production ]; then
+		[ ! -d /usr/local/etc/puppet/hieradata/production/${helpername} ] && /bin/mkdir -p /usr/local/etc/puppet/hieradata/production/${helpername}
+		echo "Copy hiera to /usr/local/etc/puppet/hieradata/production/${helpername}"
+		/bin/cp ${local_puppet_hieradata_dir}/${module}.yaml /usr/local/etc/puppet/hieradata/production/${helpername}/${host_hostname}.yaml
+	else
+		echo "no /usr/local/etc/puppet/hieradata/production, skip for coping hiera"
+	fi
 
-	jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/cbsd/${helpername}.pp
-#	jexec jname=${jname} /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml /tmp/cbsd/${helpername}.pp
+#	${ECHO} "${MAGENTA}Puppet in progress: ${GREEN}jexec for /tmp/cbsd/${helpername}.pp${NORMAL}"
+#	echo "jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/cbsd/${helpername}.pp"
+
+#	jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/cbsd/${helpername}.pp
+##	jexec jname=${jname} /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml /tmp/cbsd/${helpername}.pp
+
+	jexec jname=${jname} /usr/local/bin/puppet agent -t
 
 	echo "***"
 #	read p
