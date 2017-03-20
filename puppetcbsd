@@ -54,8 +54,9 @@ ldconfig_start()
 
 
 ### # WITH local puppet: ###
-pkg query %o puppet4
-[ $? -ne 0 ] && env ASSUME_ALWAYS_YES=yes pkg install -y sysutils/puppet4
+if [ ! -x /usr/local/bin/puppet ]; then
+	env ASSUME_ALWAYS_YES=yes pkg install -y sysutils/puppet4
+fi
 
 # run it twice
 /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml --color false --modulepath=/usr/local/etc/puppet/modules $@

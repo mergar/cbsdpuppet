@@ -85,8 +85,13 @@ puppet_apply()
 	/bin/cp -a ${local_puppet_manifest_dir}/${module}.pp ${path}/tmp/cbsd/${helpername}.pp
 
 	if [ -d /usr/local/etc/puppet/environments/production/manifests ]; then
-		echo "Copy manifest to /usr/local/etc/puppet/environments/production/manifests/${jname}-${helpername}.pp"
-		/bin/cp ${local_puppet_manifest_dir}/${module}.pp /usr/local/etc/puppet/environments/production/manifests/${jname}-${helpername}.pp
+		echo "Copy manifest to /usr/local/etc/puppet/environments/production/manifests/${host_hostname}.pp"
+		echo "node \"${host_hostname}\" {" > /usr/local/etc/puppet/environments/production/manifests/${host_hostname}.pp
+#		/bin/cp ${local_puppet_manifest_dir}/${module}.pp /usr/local/etc/puppet/environments/production/manifests/${host_hostname}.pp
+		/bin/cat ${local_puppet_manifest_dir}/${module}.pp  >> /usr/local/etc/puppet/environments/production/manifests/${host_hostname}.pp
+
+		echo "}" >> /usr/local/etc/puppet/environments/production/manifests/${host_hostname}.pp
+
 	else
 		echo "no /usr/local/etc/puppet/environments/production/manifests, skip for coping manifest"
 	fi
@@ -108,6 +113,23 @@ puppet_apply()
 
 #	jexec jname=${jname} /tmp/puppet/etc/puppet/puppetcbsd /tmp/cbsd/${helpername}.pp
 ##	jexec jname=${jname} /usr/local/bin/puppet apply --hiera_config /usr/local/etc/puppet/hiera.yaml /tmp/cbsd/${helpername}.pp
+
+	if [ ! -x ${data}/usr/local/bin/puppet ]; then
+		jexec jname=${jname} env ASSUME_ALWAYS_YES=yes pkg install -y sysutils/puppet4
+	fi
+
+	certname=$( /usr/local/bin/puppet config print certname )
+
+	mkjhosts file=${data}/etc/hosts ips="${nodeip}" hosts="${certname}" template="Puppet-CBSD-module"
+
+	cat > ${data}/usr/local/etc/puppet/puppet.conf <<EOF
+[agent]
+server = ${certname}
+pluginsync = true
+show_diff = true
+reports = none
+environment = production
+EOF
 
 	# check for crt
 	if [ -r /var/puppet/ssl/ca/signed/${host_hostname}.pem ]; then
