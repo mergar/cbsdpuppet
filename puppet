@@ -96,7 +96,6 @@ puppet_apply()
 		echo "no /usr/local/etc/puppet/environments/production/manifests, skip for coping manifest"
 	fi
 
-
 	generate_hieradata > ${local_puppet_hieradata_dir}/${module}.yaml
 	/bin/cp -a ${local_puppet_hieradata_dir}/${module}.yaml ${path}/tmp/cbsd/common.yaml
 
