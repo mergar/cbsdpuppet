@@ -1,7 +1,7 @@
 class cix_ldapize ( $ensure=present,
 	$ldap_host="ldap0.cix.com",
 	$ldap_suffix="dc=cix,dc=com",
-	$ou="ou=People",
+	$ldap_ou="ou=People",
 #	$ou=undef,
 	$ldap_bind_id=undef,
 	$ldap_bind_password=undef
