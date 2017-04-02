@@ -2,4 +2,5 @@
 SECCMD="\
 ${SECCMD}
 puppet \
+sync_env2form \
 "
