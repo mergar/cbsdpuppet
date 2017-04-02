@@ -101,9 +101,10 @@ puppet_apply()
 	/bin/cp -a ${local_puppet_hieradata_dir}/${module}.yaml ${path}/tmp/cbsd/common.yaml
 
 	if [ -d /usr/local/etc/puppet/hieradata/production ]; then
-		[ ! -d /usr/local/etc/puppet/hieradata/production/${helpername} ] && /bin/mkdir -p /usr/local/etc/puppet/hieradata/production/${helpername}
-		echo "Copy hiera to /usr/local/etc/puppet/hieradata/production/${helpername}"
-		/bin/cp ${local_puppet_hieradata_dir}/${module}.yaml /usr/local/etc/puppet/hieradata/production/${helpername}/${host_hostname}.yaml
+#		[ ! -d /usr/local/etc/puppet/hieradata/production/${helpername} ] && /bin/mkdir -p /usr/local/etc/puppet/hieradata/production/${helpername}
+		[ ! -d /usr/local/etc/puppet/hieradata/production/node ] && /bin/mkdir -p /usr/local/etc/puppet/hieradata/production/node
+		echo "Copy hiera to /usr/local/etc/puppet/hieradata/production/node/"
+		/bin/cp ${local_puppet_hieradata_dir}/${module}.yaml /usr/local/etc/puppet/hieradata/production/node/${host_hostname}.yaml
 	else
 		echo "no /usr/local/etc/puppet/hieradata/production, skip for coping hiera"
 	fi
