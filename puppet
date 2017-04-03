@@ -138,7 +138,7 @@ EOF
 		if [ "${md5_srv}" != "${md5_cl}" ]; then
 			echo "Pem diffrence, clean-up for re-sign"
 			/usr/local/bin/puppet cert clean ${host_hostname}
-			jexec jname=${jname} find /var/puppet/ssl -name jail1.convectix.com.pem -delete
+			jexec jname=${jname} find /var/puppet/ssl -name ${host_hostname}.pem -delete
 		fi
 	fi
 
