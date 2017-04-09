@@ -13,4 +13,6 @@ class loginconf (
 		refreshonly => true,
 	}
 
+	Exec { environment => [ "LANG=${lang}" ] }
+
 }
